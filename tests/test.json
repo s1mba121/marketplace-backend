@@ -1,0 +1,143 @@
+{
+    "info": {
+      "name": "Marketplace Backend API",
+      "_postman_id": "12345678-90ab-cdef-1234-567890abcdef",
+      "description": "Postman collection for testing the Marketplace Backend API",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "User Registration",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "type": "text"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n    \"email\": \"testuser@example.com\",\n    \"password\": \"password123\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/api/auth/register",
+            "host": ["{{base_url}}"],
+            "path": ["api", "auth", "register"]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "User Login",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "type": "text"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n    \"email\": \"testuser@example.com\",\n    \"password\": \"password123\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/api/auth/login",
+            "host": ["{{base_url}}"],
+            "path": ["api", "auth", "login"]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "Add Product",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "type": "text"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}",
+              "type": "text"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n    \"name\": \"Sample Product\",\n    \"image\": \"https://example.com/image.jpg\",\n    \"price\": 19.99\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/api/products",
+            "host": ["{{base_url}}"],
+            "path": ["api", "products"]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "Get User Products",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}",
+              "type": "text"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/products/user",
+            "host": ["{{base_url}}"],
+            "path": ["api", "products", "user"]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "Get All Products with Filters",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "{{base_url}}/api/products?name=Sample&minPrice=10&maxPrice=50",
+            "host": ["{{base_url}}"],
+            "path": ["api", "products"],
+            "query": [
+              {
+                "key": "name",
+                "value": "Sample"
+              },
+              {
+                "key": "minPrice",
+                "value": "10"
+              },
+              {
+                "key": "maxPrice",
+                "value": "50"
+              }
+            ]
+          }
+        },
+        "response": []
+      }
+    ],
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://localhost:4000",
+        "type": "string"
+      },
+      {
+        "key": "token",
+        "value": "",
+        "type": "string"
+      }
+    ]
+  }
+  
