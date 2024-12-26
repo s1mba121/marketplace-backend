@@ -9,7 +9,6 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { UPLOADS_DIR } = require("../config/constants");
 const jwt = require('jsonwebtoken');
 
-// Создаем папку для изображений, если её нет
 (async () => {
     try {
         await fs.mkdir(UPLOADS_DIR, { recursive: true });
@@ -110,23 +109,17 @@ exports.getProducts = async (req, res) => {
 exports.getAllProducts = async (req, res) => {
     try {
         const userId = req.user && req.user.userId;
-
         if (!userId) {
             return res.status(400).json({ message: "ID пользователя обязателен" });
         }
 
-        // Получаем все продукты
-        const products = await Product.find();
+        const products = await Product.find({ sold: false });
 
-        // Получаем корзину пользователя
         const userCart = await Cart.findOne({ userId });
-
-        // Создаем Set с ID продуктов в корзине для быстрого поиска
         const cartProductIds = new Set(
             userCart ? userCart.items.map(item => item.productId.toString()) : []
         );
 
-        // Для каждого продукта добавляем флаг isInCart
         const productsWithCartInfo = products.map(product => ({
             ...product.toObject(),
             isInCart: cartProductIds.has(product._id.toString())
@@ -139,9 +132,6 @@ exports.getAllProducts = async (req, res) => {
     }
 };
 
-
-
-// Функция для добавления продукта в корзину
 exports.addToCart = async (req, res) => {
     try {
         const userId = req.user && req.user.userId;
@@ -160,10 +150,8 @@ exports.addToCart = async (req, res) => {
         const productIndex = cart.items.findIndex((item) => item.productId.toString() === productId);
 
         if (productIndex > -1) {
-            // Если продукт уже в корзине, обновляем количество
             cart.items[productIndex].quantity += quantity;
         } else {
-            // Если продукт не в корзине, добавляем его
             cart.items.push({ productId, quantity });
         }
 
@@ -175,7 +163,6 @@ exports.addToCart = async (req, res) => {
     }
 };
 
-// Функция для удаления продукта из корзины
 exports.removeFromCart = async (req, res) => {
     try {
         const userId = req.user && req.user.userId;
@@ -200,7 +187,6 @@ exports.removeFromCart = async (req, res) => {
     }
 };
 
-// Функция для получения корзины пользователя
 exports.getCart = async (req, res) => {
     try {
         const userId = req.user && req.user.userId;
@@ -211,7 +197,7 @@ exports.getCart = async (req, res) => {
                 .json({ message: "ID пользователя обязателен" });
         }
 
-        const cart = await Cart.findOne({ userId }).populate("items.productId"); // Загружаем информацию о продуктах
+        const cart = await Cart.findOne({ userId }).populate("items.productId"); 
 
         if (!cart) {
             return res.status(404).json({ message: "Корзина не найдена" });
@@ -234,7 +220,6 @@ exports.createStripeSession = async (req, res) => {
             return res.status(400).json({ message: "ID пользователя обязателен" });
         }
 
-        // Получаем корзину пользователя
         const cart = await Cart.findOne({ userId }).populate("items.productId");
         console.log("Корзина пользователя:", cart);
 
@@ -243,7 +228,6 @@ exports.createStripeSession = async (req, res) => {
             return res.status(400).json({ message: "Корзина пуста" });
         }
 
-        // Формируем данные о товарах для Stripe
         const lineItems = cart.items.map((item) => ({
             price_data: {
                 currency: "usd",
@@ -256,7 +240,6 @@ exports.createStripeSession = async (req, res) => {
         }));
         console.log("Сформированы товары для Stripe:", lineItems);
 
-        // Создаем сессию платежа Stripe
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
             line_items: lineItems,
@@ -287,13 +270,11 @@ exports.handleStripeWebhook = async (req, res) => {
         return res.status(400).send(`Webhook error: ${error.message}`);
     }
 
-    // Обработка события успешного платежа
     if (event.type === "checkout.session.completed") {
         const session = event.data.object;
         const userId = session.metadata.userId;
         console.log("Платеж успешно завершен, обработка сессии пользователя:", userId);
 
-        // Получаем корзину пользователя
         const cart = await Cart.findOne({ userId }).populate("items.productId");
 
         if (!cart) {
@@ -304,17 +285,14 @@ exports.handleStripeWebhook = async (req, res) => {
         const productIds = cart.items.map((item) => item.productId._id);
         console.log("Обновляем статус товаров в корзине с IDs:", productIds);
 
-        // Обновляем поле sold у продуктов
         await Product.updateMany({ _id: { $in: productIds } }, { sold: true });
 
-        // Добавляем в историю покупок
         await PurchaseHistory.findOneAndUpdate(
             { userId },
             { $push: { products: { $each: productIds.map(id => ({ productId: id })) } } },
             { upsert: true, new: true }
         );
 
-        // Очищаем корзину после покупки
         cart.items = [];
         await cart.save();
 
@@ -327,45 +305,48 @@ exports.handleStripeWebhook = async (req, res) => {
 exports.purchaseProducts = async (req, res) => {
     try {
         const userId = req.user && req.user.userId;
-        console.log("Запрос на покупку товаров, ID пользователя:", userId);
-
         if (!userId) {
-            console.log("ID пользователя не передано");
             return res.status(400).json({ message: "ID пользователя обязателен" });
         }
 
-        // Получаем корзину пользователя
         const cart = await Cart.findOne({ userId }).populate("items.productId");
-        console.log("Корзина пользователя:", cart);
-
         if (!cart || cart.items.length === 0) {
-            console.log("Корзина пуста или не найдена");
             return res.status(400).json({ message: "Корзина пуста" });
         }
 
-        // Обновляем поле sold у продуктов
         const productIds = cart.items.map(item => item.productId._id);
-        console.log("Обновляем статус товаров с IDs:", productIds);
-        await Product.updateMany({ _id: { $in: productIds } }, { sold: true });
+        
+        await Product.updateMany(
+            { _id: { $in: productIds } },
+            { sold: true, soldDate: new Date() }
+        );
 
-        // Добавляем продукты в историю покупок
-        const purchaseHistory = await PurchaseHistory.findOneAndUpdate(
+    
+        await PurchaseHistory.findOneAndUpdate(
             { userId },
-            { $push: { products: { $each: productIds.map(id => ({ productId: id })) } } },
+            {
+                $push: {
+                    products: { $each: productIds.map(id => ({ productId: id, purchaseDate: new Date() })) }
+                }
+            },
             { upsert: true, new: true }
         );
 
-        // Очищаем корзину после покупки
+        await Cart.updateMany(
+            { "items.productId": { $in: productIds } },
+            { $pull: { items: { productId: { $in: productIds } } } }
+        );
+
         cart.items = [];
         await cart.save();
 
-        console.log("Покупка успешно завершена, обновлена история покупок");
-        res.status(200).json({ message: "Покупка успешно завершена", purchaseHistory });
+        res.status(200).json({ message: "Покупка успешно завершена" });
     } catch (error) {
         console.error("Ошибка при совершении покупки:", error);
         res.status(500).json({ message: "Ошибка при совершении покупки" });
     }
 };
+
 
 exports.getPurchaseHistory = async (req, res) => {
     try {

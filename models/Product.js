@@ -7,7 +7,9 @@ const productSchema = new mongoose.Schema({
   imageUrl: { type: String, required: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   dateUploaded: { type: Date, default: Date.now },
-  sold: { type: Boolean, default: false }  // Новое поле для отслеживания продаж
+  sold: { type: Boolean, default: false },
+  soldDate: { type: Date }
 });
+
 
 module.exports = mongoose.model('Product', productSchema);

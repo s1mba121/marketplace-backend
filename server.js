@@ -1,3 +1,4 @@
+// server.js
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -15,8 +16,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use("/api/products/webhook", express.raw({ type: "application/json" })); // raw для вебхука
-app.use(express.json()); // Для обработки JSON-запросов
+app.use("/api/products/webhook", express.raw({ type: "application/json" }));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })

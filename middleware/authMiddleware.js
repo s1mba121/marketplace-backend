@@ -1,3 +1,4 @@
+// src/middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
 
 const authMiddleware = (req, res, next) => {
@@ -8,11 +9,11 @@ const authMiddleware = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log("Декодированные данные пользователя:", decoded); // Лог для отладки
+        console.log("Декодированные данные пользователя:", decoded);
         req.user = decoded;
         next();
     } catch (error) {
-        console.error("Ошибка при проверке токена:", error); // Лог для отладки
+        console.error("Ошибка при проверке токена:", error);
         return res.status(401).json({ message: "Неверный токен" });
     }
 };

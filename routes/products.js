@@ -10,8 +10,6 @@ const { UPLOADS_DIR } = require("../config/constants");
 const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
 
-
-// Настройка хранилища Multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, UPLOADS_DIR);
@@ -24,7 +22,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // Максимальный размер файла 5MB
+    limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith("image/")) {
             cb(null, true);
@@ -34,69 +32,67 @@ const upload = multer({
     },
 });
 
-// Маршрут для создания продукта (POST /products)
 router.post(
     "/create",
-    authMiddleware,         // Проверка токена пользователя
-    upload.single('image'), // Загрузка одного файла
+    authMiddleware,      
+    upload.single('image'), 
     createProduct
 );
 
-// Маршрут для получения продуктов с фильтрацией и пагинацией (GET /products)
+
 router.get(
     "/",
-    authMiddleware,        // Проверка токена пользователя
+    authMiddleware,        
     getProducts
 );
 
-// Маршрут для получения всех продуктов пользователя (GET /products/all)
+
 router.get(
-    "/all",     // Проверка токена пользователя
+    "/all",  
     authMiddleware,
     getAllProducts
 );
 
 router.post(
     "/cart/add",
-    authMiddleware, // Проверка токена пользователя
+    authMiddleware,
     addToCart
 );
 
-// Маршрут для удаления продукта из корзины (DELETE /products/cart/remove)
 router.delete(
     "/cart/remove",
-    authMiddleware, // Проверка токена пользователя
+    authMiddleware,
     removeFromCart
 );
 
 router.get(
     "/cart",
-    authMiddleware, // Проверка токена пользователя
+    authMiddleware,
     getCart
 );
 
 router.post(
     "/purchase",
-    authMiddleware, // Проверка токена пользователя
+    authMiddleware,
     purchaseProducts
 );
 
 
 router.get(
     "/history",
-    authMiddleware, // Проверка токена пользователя
+    authMiddleware,
     getPurchaseHistory
 );
 
 router.post(
     "/create-checkout-session",
-    authMiddleware, // Проверка токена пользователя
+    authMiddleware,
     createStripeSession
 );
 
 router.post(
     "/webhook",
-    express.raw({ type: "application/json" }), // Обработка сырого тела вебхука
+    express.raw({ type: "application/json" }),
     handleStripeWebhook
 );
 

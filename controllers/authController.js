@@ -1,3 +1,4 @@
+// src/controllers/authController.js
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
@@ -11,11 +12,9 @@ exports.register = async (req, res) => {
     const user = await User.create({ email, password: hashedPassword });
     console.log('User registered successfully:', user);
 
-    // Создание JWT токена сразу после регистрации
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     console.log('Token generated for registered user:', token);
 
-    // Отправка токена клиенту
     res.status(201).json({ message: 'User registered successfully', token });
   } catch (error) {
     console.error('Error registering user:', error);
@@ -54,7 +53,6 @@ exports.login = async (req, res) => {
 
 exports.logout = async (req, res) => {
     try {
-      // Обычно удаление JWT происходит на клиенте, но можно также направить инструкцию на удаление
       res.status(200).json({ message: 'Logged out successfully' });
     } catch (error) {
       console.error('Error logging out:', error);
